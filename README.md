@@ -68,7 +68,7 @@ ST方案，来自 [dm00605707-operational-amplifier-opamp-usage-in-stm32g4-serie
 
 ### Feature
 
-双电阻采样，stm32g431内部的三运放，两个用于采样，一个用于产生基准电压
+三电阻采样，使用stm32g431内部的三运放
 
 1路ADC用于母线电压采样，电池电压变化时可进行补偿
 
@@ -96,33 +96,33 @@ SW调试接口
 
 #### IIC总线定义
 
-**总线空闲IDEL：**SDA和SCL都是高电平。
+**总线空闲IDEL：** SDA和SCL都是高电平。
 
-**开始传输START：**SCL为高时，SDA从高到低。
+**开始传输START：** SCL为高时，SDA从高到低。
 
-**停止传输STOP：**SCL为高时，SDA从低到高。
+**停止传输STOP：** SCL为高时，SDA从低到高。
 
 **数据有效：** 每次传输都以 START 开始，STOP 结尾，这之间的传输字节数由主机控制，不受限制。在SCL为高时，SDA必须保持稳定，否则会被误认为 START 或 STOP。传输以字节为单位，并且接收方在每个字节的结尾（第9位）发送一个ACK。
 
-**响应ACK：**发送端占用SDA完成8bit数据传输后，会释放SDA（默认上拉），接收方需要在第9bit拉低SDA，作为一个ACK。主机在读操作的最后一个字节后产生一个NOT ACK，这时从机会继续保持释放总线，主机产生STOP，结束本次读取。
+**响应ACK：** 发送端占用SDA完成8bit数据传输后，会释放SDA（默认上拉），接收方需要在第9bit拉低SDA，作为一个ACK。主机在读操作的最后一个字节后产生一个NOT ACK，这时从机会继续保持释放总线，主机产生STOP，结束本次读取。
 
-**主机写从机：**主机发送的第一个字节是从机的7bit地址+1bit读写位，接下来就是数据字节，从机在每个字节后发送ACK，如果数据或命令不合法则发送NACK，数据的字节序是MSB。
+**主机写从机：** 主机发送的第一个字节是从机的7bit地址+1bit读写位，接下来就是数据字节，从机在每个字节后发送ACK，如果数据或命令不合法则发送NACK，数据的字节序是MSB。
 
-**主机读从机：**同上先发送1byte 地址+读写位，从机需要ACK一下，接下来从机发送数据（SCL仍然是主机控制），主机在每个字节后回复ACK，最后一个字节主机发送一个NACK，接着STOP或下一个START。
+**主机读从机：** 同上先发送1byte 地址+读写位，从机需要ACK一下，接下来从机发送数据（SCL仍然是主机控制），主机在每个字节后回复ACK，最后一个字节主机发送一个NACK，接着STOP或下一个START。
 
 
 
 #### AS5600 IIC 传输时序
 
-除了IIC的device address，AS5600还存在一个word address，位于**写操作**的第一个字节，用于选择AS5600的寄存器，在一个字节的读或写完成时，该word address pointer 将自动递增。当word address pointer 无效时，返回NACK。
+除了IIC的device address，AS5600还存在一个word address，位于 **写操作** 的第一个字节，用于选择AS5600的寄存器，在一个字节的读或写完成时，该word address pointer 将自动递增。当word address pointer 无效时，返回NACK。
 
-**WRITE**：主机发送地址0x36+1'b0，从机ACK，主机发送word address（表示接下来访问的寄存器的地址），从机ACK（若地址无效则NACK），主机发送数据，从机的word address pointer每个字节都自增（无论word address是否有效），若word address则从机ACK，否则NACK，主机发送STOP，完成。![image-20240125204136341](./docs/img/image-20240125204136341.png)
+**WRITE：** 主机发送地址0x36+1'b0，从机ACK，主机发送word address（表示接下来访问的寄存器的地址），从机ACK（若地址无效则NACK），主机发送数据，从机的word address pointer每个字节都自增（无论word address是否有效），若word address则从机ACK，否则NACK，主机发送STOP，完成。![image-20240125204136341](./docs/img/image-20240125204136341.png)
 
-**READ：**同上发送首字节，从机ACK，从机发送word address pointer指向的数据，主机ACK，主机拿到最后一个字节后，发送NACK，从机释放SDA，主机STOP。
+**READ：** 同上发送首字节，从机ACK，从机发送word address pointer指向的数据，主机ACK，主机拿到最后一个字节后，发送NACK，从机释放SDA，主机STOP。
 
 ![image-20240125204524634](./docs/img/image-20240125204524634.png)
 
-**word address pointer reload（完整的读时序）：**每次先重写一下word address pointer，再读。
+**word address pointer reload（完整的读时序）：** 每次先重写一下word address pointer，再读。
 
 ![image-20240125204603807](./docs/img/image-20240125204603807.png)
 
